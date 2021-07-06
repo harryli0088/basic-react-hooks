@@ -2,16 +2,30 @@ console.log("HELLOW")
 
 //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
 const MyReact = (function()  { //self invoking function
-  const hooks = []
+  const components = [] //tracks all the components
+  const hooks = [] //array holding state values or effect dependency arrays
   let globalHookIndex = 0
+  // let rerenderTimeout = 0
+
+  function render(FC) {
+    // components.push(FC) //add the component to our array
+    return renderComp(FC)
+  }
+
+  function renderComp(FC) {
+    const comp = FC() //run the functional component
+    comp.render() //render the component
+    globalHookIndex = 0 //resent the hook index
+    return comp
+  }
+
+  function renderAll() {
+    globalHookIndex = 0 //reset the hook index
+    components.forEach(renderComp)
+  }
 
   return {
-    render(Component) {
-      const comp = Component()
-      comp.render()
-      globalHookIndex = 0
-      return comp
-    },
+    render,
     useEffect(callback, deps) {
       const oldDeps = hooks[globalHookIndex] //will be undefined on first usage
       const depsChanged = ( //true if oldDeps is undefined or some deps are not equal
@@ -32,7 +46,12 @@ const MyReact = (function()  { //self invoking function
       }
 
       const localHookIndex = globalHookIndex //copy the hook index to be used in the closure
-      const setHook = (newValue) => hooks[localHookIndex] = newValue //set the new value
+      const setHook = (newValue) => {
+        hooks[localHookIndex] = newValue //set the new value
+
+        // clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
+        // rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
+      }
       return [
         hooks[globalHookIndex++], //return the current hook value, also increment to the next index
         setHook
@@ -40,21 +59,22 @@ const MyReact = (function()  { //self invoking function
     }
   }
 })()
+
+
 function MyComponent() {
   const [count, setCount] = MyReact.useState(0)
-  const [text, setText] = MyReact.useState('foo') // 2nd state hook!
-  MyReact.useEffect(() => {
-    console.log('effect', count, text)
-  }, [count, text])
   return {
     click: () => setCount(count + 1),
-    type: txt => setText(txt),
-    noop: () => setCount(count),
     render: () => {
-      console.log("HELLO?")
-      document.getElementById("root").innerHTML = JSON.stringify({ count, text })
+      document.getElementById("root").innerHTML = JSON.stringify({ count })
     }
   }
 }
 
-const App = MyReact.render(MyComponent)
+let App
+App = MyReact.render(MyComponent)
+
+function increment() {
+  App.click()
+  App = MyReact.render(MyComponent)
+}
