@@ -1,37 +1,37 @@
-console.log("HELLOW")
-
 //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
-const MyReact = (function()  { //self invoking function
+//In this basic implementation of React, all components should return DOM elements to be appeneded to the root element
+const MyReact = (function(rootId)  { //self invoking function
+  const rootElement = (
+    document.getElementById(rootId || "root") //default to an element with the id "root"
+    || document.body //default to the body
+  )
   const components = [] //tracks all the components
   const hooks = [] //array holding state values or effect dependency arrays
   let globalHookIndex = 0
   let rerenderTimeout = 0
 
-  function removeAllChildNodes(parent) {
+  function removeAllChildNodes(parent) { //used for clearing the root element
     while (parent.firstChild) {
-      parent.removeChild(parent.firstChild);
+      parent.removeChild(parent.firstChild)
     }
-}
+  }
 
-  function render(FC) {
+  function render(FC) { //add a new component to be rendered
     components.push(FC) //add the component to our array
-    return renderComp(FC)
+    renderOne(FC) //immediately render this component
   }
 
-  function renderComp(FC) {
-    const comp = FC() //run the functional component
-    comp.render() //render the component
-    globalHookIndex = 0 //resent the hook index
-    return comp
+  function renderOne(FC) { //render one component
+    rootElement.append(FC()) //append the component output to the root element
   }
 
-  function renderAll() {
-    removeAllChildNodes(document.getElementById("root"))
+  function renderAll() { //render all the current components
+    //the real React checks the virtual DOM to see if a DOM update is actually necessary
+    //but this is good enough for a basic implementation
+    removeAllChildNodes(rootElement) //clear the root
     globalHookIndex = 0 //reset the hook index
-    components.forEach(renderComp)
+    components.forEach(renderOne) //render all the components
   }
-
-  
 
   return {
     render,
@@ -70,21 +70,32 @@ const MyReact = (function()  { //self invoking function
 })()
 
 
-function MyComponent() {
+function Counter() {
   const [count, setCount] = MyReact.useState(0)
-  return {
-    render: () => {
-      const button = document.createElement("button")
-      button.innerHTML = "Testing"
-      button.onclick = () => setCount(count + 1)
 
-      const div = document.createElement("div")
-      div.innerHTML = JSON.stringify({ count })
+  //DOM interactions
+  const div = document.createElement("div")
 
-      document.getElementById("root").append(button)
-      document.getElementById("root").append(div)
-    }
-  }
+  const button = document.createElement("button")
+  button.innerHTML = "Increment"
+  button.onclick = () => setCount(count + 1)
+
+  const span = document.createElement("div")
+  span.innerHTML = `Current Count: ${count}`
+
+  div.append(button)
+  div.append(span)
+  div.append(CounterChild({count}))
+  return div
 }
 
-MyReact.render(MyComponent)
+function CounterChild(props) {
+  const { count } = props
+
+  const div = document.createElement("div")
+  div.innerHTML = `Your count squared is: ${count * count}`
+  return div
+}
+
+MyReact.render(Counter)
+MyReact.render(TextParent)
