@@ -17,11 +17,13 @@
   <style>
     body {
       margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 1px;
     }
 
     #container {
       display: flex;
-      flex-direction: column-reverse;
+      flex-direction: column;
     }
     @media only screen and (min-width: 800px) {
       #container {
@@ -32,22 +34,57 @@
         overflow-y: auto;
         width: calc(100% - 300px);
       }
-      #root {
+      #content {
         width: 300px;
-        padding: 1em;
       }
+    }
+
+    #descrition {
+      padding: 1em;
+      background-color: #ddd;
+      border-bottom: 1px solid black;
+    }
+    #root {
+      padding: 1em;
     }
 
     code.language-js, pre.language-js {
       border-radius: 0;
       margin: 0;
     }
+
+    button {
+      background-color: #2E86C1;
+      border: 2px solid #2E86C1;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      outline: none;
+      padding: 0.75em;
+      padding-top: 0.25em;
+      padding-bottom: 0.25em;
+      transition: 0.5s;
+    }
+    button:active {
+      transform: scale(0.90);
+    }
+
+    #root > div > div {
+      margin-bottom: 0.5em;
+    }
   </style>
 </head>
 <body>
   <div id="container">
+    <div id="content">
+      <div id="descrition">
+        <h2>Basic React Hooks</h2>
+        <p>Netlify has a fantastic <a href="https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/" target="_blank" rel="noopener noreferrer">article</a> about how React Hooks work using closures and arrays. I implemented a basic version of React with functional components, useEffect, useRef, useState, and automatic (albeit naive) rerenders!</p>
+      </div>
+      <div id="root"></div>
+    </div>
     <div id="code-formatter"><pre><code class="language-js"></code></pre></div>
-    <div id="root"></div>
   </div>
 
   <script id="code">
@@ -102,6 +139,13 @@
 
           globalHookIndex++ //increment to the next index
         },
+        useRef(initialValue) {
+          if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
+            hooks[globalHookIndex] = { current: initialValue } //set the initial ref value
+          }
+
+          return hooks[globalHookIndex++] //return the ref, also increment to the next index
+        },
         useState(initialValue) {
           if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
             hooks[globalHookIndex] = initialValue
@@ -130,23 +174,40 @@
       const div = document.createElement("div")
 
       const button = document.createElement("button")
-      button.innerHTML = "Increment"
-      button.onclick = () => setCount(count + 1)
+      button.innerHTML = "Increment Count"
+      button.onclick = () => setCount(count + 1) //increment the count on click
 
-      const span = document.createElement("div")
-      span.innerHTML = `Current Count: ${count}`
+      const countText = document.createElement("div")
+      countText.innerHTML = `Current Count: ${count}`
 
+      div.append(Countdown({count}))
+      div.append(countText)
       div.append(button)
-      div.append(span)
-      div.append(CounterChild({count}))
       return div
     }
 
-    function CounterChild(props) {
+    function Countdown(props) {
       const { count } = props
 
+      const [countdown, setCountdown] = MyReact.useState(0)
+      const timeoutId = MyReact.useRef()
+
+      MyReact.useEffect(() => { //run this if the count changes
+        clearTimeout(timeoutId.current) //clear old timeout
+        setCountdown(count) //set the countdown to the new count
+      }, [count])
+
+      MyReact.useEffect(() => { //run this if the countdown changes
+        if(countdown > 0) { //if our countdown is greater than 1
+          timeoutId.current = setTimeout(() => { //set a timeout for 1 second later
+            setCountdown(countdown - 1) //decrement the countdown
+          }, 1000)
+        }
+      }, [countdown])
+
+      //DOM interactions
       const div = document.createElement("div")
-      div.innerHTML = `Your count squared is: ${count * count}`
+      div.innerHTML = `Countdown: ${countdown}`
       return div
     }
 
