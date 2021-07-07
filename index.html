@@ -5,11 +5,11 @@
 	<meta name='viewport' content='width=device-width,initial-scale=1'>
 
 	<title>Basic React Hooks</title>
-  <meta name="description" content=""/>
+  <meta name="description" content="I implemented a basic version of React with functional components, useEffect, useRef, useState, and automatic (albeit naive) rerenders!"/>
 	<meta property="og:title" content="Basic React Hooks" />
-  <meta property="og:description" content="" />
+  <meta property="og:description" content="I implemented a basic version of React with functional components, useEffect, useRef, useState, and automatic (albeit naive) rerenders!" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="" />
+  <meta property="og:url" content="https://harryli0088.github.io/basic-react-hooks/" />
 	<meta property="og:image" content=""/>
 
 	<link rel='icon' type='image/png' href='./favicon.ico'/>
@@ -88,130 +88,130 @@
   </div>
 
   <script id="code">
-    //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
-    //In this basic implementation of React, all components should return DOM elements to be appeneded to the root element
-    const MyReact = (function(rootId)  { //self invoking function
-      const rootElement = (
-        document.getElementById(rootId || "root") //default to an element with the id "root"
-        || document.body //default to the body
-      )
-      const components = [] //tracks all the components
-      const hooks = [] //array holding state values or effect dependency arrays
-      let globalHookIndex = 0
-      let rerenderTimeout = 0
+  //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
+  //In this basic implementation of React, all components should return DOM elements to be appeneded to the root element
+  const MyReact = (function(rootId)  { //self invoking function
+    const rootElement = (
+      document.getElementById(rootId || "root") //default to an element with the id "root"
+      || document.body //default to the body
+    )
+    const components = [] //tracks all the components
+    const hooks = [] //array holding state values or effect dependency arrays
+    let globalHookIndex = 0
+    let rerenderTimeout = 0
 
-      function removeAllChildNodes(parent) { //used for clearing the root element
-        while (parent.firstChild) {
-          parent.removeChild(parent.firstChild)
-        }
+    function removeAllChildNodes(parent) { //used for clearing the root element
+      while (parent.firstChild) {
+        parent.removeChild(parent.firstChild)
       }
-
-      function render(FC) { //add a new component to be rendered
-        components.push(FC) //add the component to our array
-        renderOne(FC) //immediately render this component
-      }
-
-      function renderOne(FC) { //render one component
-        rootElement.append(FC()) //append the component output to the root element
-      }
-
-      function renderAll() { //render all the current components
-        //the real React checks the virtual DOM to see if a DOM update is actually necessary
-        //but this is good enough for a basic implementation
-        removeAllChildNodes(rootElement) //clear the root
-        globalHookIndex = 0 //reset the hook index
-        components.forEach(renderOne) //render all the components
-      }
-
-      return {
-        render,
-        useEffect(callback, deps) {
-          const oldDeps = hooks[globalHookIndex] //will be undefined on first usage
-          const depsChanged = ( //true if oldDeps is undefined or some deps are not equal
-            !oldDeps //true if oldDeps is undefined
-            || oldDeps.some((d,i) => d !== deps[i]) //true if some deps are not equal
-          )
-
-          if(!deps || depsChanged) { //if there are no deps OR deps have changed
-            callback() //run the callback
-            hooks[globalHookIndex] = deps //set the new deps
-          }
-
-          globalHookIndex++ //increment to the next index
-        },
-        useRef(initialValue) {
-          if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
-            hooks[globalHookIndex] = { current: initialValue } //set the initial ref value
-          }
-
-          return hooks[globalHookIndex++] //return the ref, also increment to the next index
-        },
-        useState(initialValue) {
-          if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
-            hooks[globalHookIndex] = initialValue
-          }
-
-          const localHookIndex = globalHookIndex //copy the hook index to be used in the closure
-          const setHook = (newValue) => {
-            hooks[localHookIndex] = newValue //set the new value
-
-            clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
-            rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
-          }
-          return [
-            hooks[globalHookIndex++], //return the current hook value, also increment to the next index
-            setHook
-          ]
-        }
-      }
-    })()
-
-
-    function Counter() {
-      const [count, setCount] = MyReact.useState(0)
-
-      //DOM interactions
-      const div = document.createElement("div")
-
-      const button = document.createElement("button")
-      button.innerHTML = "Increment Count"
-      button.onclick = () => setCount(count + 1) //increment the count on click
-
-      const countText = document.createElement("div")
-      countText.innerHTML = `Current Count: ${count}`
-
-      div.append(Countdown({count}))
-      div.append(countText)
-      div.append(button)
-      return div
     }
 
-    function Countdown(props) {
-      const { count } = props
-
-      const [countdown, setCountdown] = MyReact.useState(0)
-      const timeoutId = MyReact.useRef()
-
-      MyReact.useEffect(() => { //run this if the count changes
-        clearTimeout(timeoutId.current) //clear old timeout
-        setCountdown(count) //set the countdown to the new count
-      }, [count])
-
-      MyReact.useEffect(() => { //run this if the countdown changes
-        if(countdown > 0) { //if our countdown is greater than 1
-          timeoutId.current = setTimeout(() => { //set a timeout for 1 second later
-            setCountdown(countdown - 1) //decrement the countdown
-          }, 1000)
-        }
-      }, [countdown])
-
-      //DOM interactions
-      const div = document.createElement("div")
-      div.innerHTML = `Countdown: ${countdown}`
-      return div
+    function render(FC) { //add a new component to be rendered
+      components.push(FC) //add the component to our array
+      renderOne(FC) //immediately render this component
     }
 
-    MyReact.render(Counter)
+    function renderOne(FC) { //render one component
+      rootElement.append(FC()) //append the component output to the root element
+    }
+
+    function renderAll() { //render all the current components
+      //the real React checks the virtual DOM to see if a DOM update is actually necessary
+      //but this is good enough for a basic implementation
+      removeAllChildNodes(rootElement) //clear the root
+      globalHookIndex = 0 //reset the hook index
+      components.forEach(renderOne) //render all the components
+    }
+
+    return {
+      render,
+      useEffect(callback, deps) {
+        const oldDeps = hooks[globalHookIndex] //will be undefined on first usage
+        const depsChanged = ( //true if oldDeps is undefined or some deps are not equal
+          !oldDeps //true if oldDeps is undefined
+          || oldDeps.some((d,i) => d !== deps[i]) //true if some deps are not equal
+        )
+
+        if(!deps || depsChanged) { //if there are no deps OR deps have changed
+          callback() //run the callback
+          hooks[globalHookIndex] = deps //set the new deps
+        }
+
+        globalHookIndex++ //increment to the next index
+      },
+      useRef(initialValue) {
+        if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
+          hooks[globalHookIndex] = { current: initialValue } //set the initial ref value
+        }
+
+        return hooks[globalHookIndex++] //return the ref, also increment to the next index
+      },
+      useState(initialValue) {
+        if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
+          hooks[globalHookIndex] = initialValue
+        }
+
+        const localHookIndex = globalHookIndex //copy the hook index to be used in the closure
+        const setHook = (newValue) => {
+          hooks[localHookIndex] = newValue //set the new value
+
+          clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
+          rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
+        }
+        return [
+          hooks[globalHookIndex++], //return the current hook value, also increment to the next index
+          setHook
+        ]
+      }
+    }
+  })()
+
+
+  function Counter() {
+    const [count, setCount] = MyReact.useState(0)
+
+    //DOM interactions
+    const div = document.createElement("div")
+
+    const button = document.createElement("button")
+    button.innerHTML = "Increment Count"
+    button.onclick = () => setCount(count + 1) //increment the count on click
+
+    const countText = document.createElement("div")
+    countText.innerHTML = `Current Count: ${count}`
+
+    div.append(Countdown({count}))
+    div.append(countText)
+    div.append(button)
+    return div
+  }
+
+  function Countdown(props) {
+    const { count } = props
+
+    const [countdown, setCountdown] = MyReact.useState(0)
+    const timeoutId = MyReact.useRef()
+
+    MyReact.useEffect(() => { //run this if the count changes
+      clearTimeout(timeoutId.current) //clear old timeout
+      setCountdown(count) //set the countdown to the new count
+    }, [count])
+
+    MyReact.useEffect(() => { //run this if the countdown changes
+      if(countdown > 0) { //if our countdown is greater than 1
+        timeoutId.current = setTimeout(() => { //set a timeout for 1 second later
+          setCountdown(countdown - 1) //decrement the countdown
+        }, 1000)
+      }
+    }, [countdown])
+
+    //DOM interactions
+    const div = document.createElement("div")
+    div.innerHTML = `Countdown: ${countdown}`
+    return div
+  }
+
+  MyReact.render(Counter)
   </script>
 
 	<script>
