@@ -5,10 +5,16 @@ const MyReact = (function()  { //self invoking function
   const components = [] //tracks all the components
   const hooks = [] //array holding state values or effect dependency arrays
   let globalHookIndex = 0
-  // let rerenderTimeout = 0
+  let rerenderTimeout = 0
+
+  function removeAllChildNodes(parent) {
+    while (parent.firstChild) {
+      parent.removeChild(parent.firstChild);
+    }
+}
 
   function render(FC) {
-    // components.push(FC) //add the component to our array
+    components.push(FC) //add the component to our array
     return renderComp(FC)
   }
 
@@ -20,9 +26,12 @@ const MyReact = (function()  { //self invoking function
   }
 
   function renderAll() {
+    removeAllChildNodes(document.getElementById("root"))
     globalHookIndex = 0 //reset the hook index
     components.forEach(renderComp)
   }
+
+  
 
   return {
     render,
@@ -49,8 +58,8 @@ const MyReact = (function()  { //self invoking function
       const setHook = (newValue) => {
         hooks[localHookIndex] = newValue //set the new value
 
-        // clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
-        // rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
+        clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
+        rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
       }
       return [
         hooks[globalHookIndex++], //return the current hook value, also increment to the next index
@@ -64,17 +73,18 @@ const MyReact = (function()  { //self invoking function
 function MyComponent() {
   const [count, setCount] = MyReact.useState(0)
   return {
-    click: () => setCount(count + 1),
     render: () => {
-      document.getElementById("root").innerHTML = JSON.stringify({ count })
+      const button = document.createElement("button")
+      button.innerHTML = "Testing"
+      button.onclick = () => setCount(count + 1)
+
+      const div = document.createElement("div")
+      div.innerHTML = JSON.stringify({ count })
+
+      document.getElementById("root").append(button)
+      document.getElementById("root").append(div)
     }
   }
 }
 
-let App
-App = MyReact.render(MyComponent)
-
-function increment() {
-  App.click()
-  App = MyReact.render(MyComponent)
-}
+MyReact.render(MyComponent)
