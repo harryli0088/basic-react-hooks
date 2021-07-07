@@ -1,6 +1,8 @@
 # Basic React Hooks
 
-https://harryli0088.github.io/basic-react-hooks/
+Live Site: https://harryli0088.github.io/basic-react-hooks/
+
+![Screenshot](/screenshot.png)
 
 Netlify has a fantastic article about how React Hooks work using closures and arrays. I implemented a basic version of React with functional components, useEffect, useRef, useState, and automatic (albeit naive) rerenders!
 
