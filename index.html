@@ -12,10 +12,151 @@
   <meta property="og:url" content="" />
 	<meta property="og:image" content=""/>
 
-	<link rel='icon' type='image/png' href='./favicon.ico'>
+	<link rel='icon' type='image/png' href='./favicon.ico'/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.css" integrity="sha512-lTmd0bFMM2Ttm/S8V5dywYNiJaSyF5PILZosvAIzW4EJ7JLEYflk9ImyYIxw5KlFz7e9ZCJN53rnvPnefD240w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    body {
+      margin: 0;
+    }
+
+    #container {
+      display: flex;
+      flex-direction: column-reverse;
+    }
+    @media only screen and (min-width: 800px) {
+      #container {
+        flex-direction: row;
+      }
+      #code-formatter {
+        height: 100vh;
+        overflow-y: auto;
+        width: calc(100% - 300px);
+      }
+      #root {
+        width: 300px;
+        padding: 1em;
+      }
+    }
+
+    code.language-js, pre.language-js {
+      border-radius: 0;
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-	<script src='./main.js'></script>
+  <div id="container">
+    <div id="code-formatter"><pre><code class="language-js"></code></pre></div>
+    <div id="root"></div>
+  </div>
+
+  <script id="code">
+    //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
+    //In this basic implementation of React, all components should return DOM elements to be appeneded to the root element
+    const MyReact = (function(rootId)  { //self invoking function
+      const rootElement = (
+        document.getElementById(rootId || "root") //default to an element with the id "root"
+        || document.body //default to the body
+      )
+      const components = [] //tracks all the components
+      const hooks = [] //array holding state values or effect dependency arrays
+      let globalHookIndex = 0
+      let rerenderTimeout = 0
+
+      function removeAllChildNodes(parent) { //used for clearing the root element
+        while (parent.firstChild) {
+          parent.removeChild(parent.firstChild)
+        }
+      }
+
+      function render(FC) { //add a new component to be rendered
+        components.push(FC) //add the component to our array
+        renderOne(FC) //immediately render this component
+      }
+
+      function renderOne(FC) { //render one component
+        rootElement.append(FC()) //append the component output to the root element
+      }
+
+      function renderAll() { //render all the current components
+        //the real React checks the virtual DOM to see if a DOM update is actually necessary
+        //but this is good enough for a basic implementation
+        removeAllChildNodes(rootElement) //clear the root
+        globalHookIndex = 0 //reset the hook index
+        components.forEach(renderOne) //render all the components
+      }
+
+      return {
+        render,
+        useEffect(callback, deps) {
+          const oldDeps = hooks[globalHookIndex] //will be undefined on first usage
+          const depsChanged = ( //true if oldDeps is undefined or some deps are not equal
+            !oldDeps //true if oldDeps is undefined
+            || oldDeps.some((d,i) => d !== deps[i]) //true if some deps are not equal
+          )
+
+          if(!deps || depsChanged) { //if there are no deps OR deps have changed
+            callback() //run the callback
+            hooks[globalHookIndex] = deps //set the new deps
+          }
+
+          globalHookIndex++ //increment to the next index
+        },
+        useState(initialValue) {
+          if(hooks[globalHookIndex] === undefined) { //set the initial value if necessary
+            hooks[globalHookIndex] = initialValue
+          }
+
+          const localHookIndex = globalHookIndex //copy the hook index to be used in the closure
+          const setHook = (newValue) => {
+            hooks[localHookIndex] = newValue //set the new value
+
+            clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
+            rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
+          }
+          return [
+            hooks[globalHookIndex++], //return the current hook value, also increment to the next index
+            setHook
+          ]
+        }
+      }
+    })()
+
+
+    function Counter() {
+      const [count, setCount] = MyReact.useState(0)
+
+      //DOM interactions
+      const div = document.createElement("div")
+
+      const button = document.createElement("button")
+      button.innerHTML = "Increment"
+      button.onclick = () => setCount(count + 1)
+
+      const span = document.createElement("div")
+      span.innerHTML = `Current Count: ${count}`
+
+      div.append(button)
+      div.append(span)
+      div.append(CounterChild({count}))
+      return div
+    }
+
+    function CounterChild(props) {
+      const { count } = props
+
+      const div = document.createElement("div")
+      div.innerHTML = `Your count squared is: ${count * count}`
+      return div
+    }
+
+    MyReact.render(Counter)
+  </script>
+
+	<script>
+    document.getElementsByTagName("code")[0].innerHTML = document.getElementById("code").innerHTML
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js" integrity="sha512-axJX7DJduStuBB8ePC8ryGzacZPr3rdLaIDZitiEgWWk2gsXxEFlm4UW0iNzj2h3wp5mOylgHAzBzM4nRSvTZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-xCfKr8zIONbip3Q1XG/u5x40hoJ0/DtP1bxyMEi0GWzUFoUffE+Dfw1Br8j55RRt9qG7bGKsh+4tSb1CvFHPSA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
 </html>
