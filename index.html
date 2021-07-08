@@ -81,6 +81,7 @@
       <div id="descrition">
         <h2>Basic React Hooks</h2>
         <p>Netlify has a fantastic <a href="https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/" target="_blank" rel="noopener noreferrer">article</a> about how React Hooks work using closures and arrays. I implemented a basic version of React with functional components, useEffect, useRef, useState, and naive automatic rerenders!</p>
+        <p><a href="https://github.com/harryli0088/basic-react-hooks" rel="noopener noreferrer">Github Repo</a></p>
       </div>
       <div id="root"></div>
     </div>
@@ -90,11 +91,8 @@
   <script id="code">
   //Based off this article: https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work
   //In this basic implementation of React, all components should return DOM elements to be appeneded to the root element
-  const MyReact = (function(rootId)  { //self invoking function
-    const rootElement = (
-      document.getElementById(rootId || "root") //default to an element with the id "root"
-      || document.body //default to the body
-    )
+  const MyReact = (function()  { //self invoking function
+    const rootElement = document.getElementById("root")
     const components = [] //tracks all the components
     const hooks = [] //array holding state values or effect dependency arrays
     let globalHookIndex = 0
