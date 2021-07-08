@@ -119,20 +119,42 @@
       removeAllChildNodes(rootElement) //clear the root
       globalHookIndex = 0 //reset the hook index
       components.forEach(renderOne) //render all the components
+
+      hooks.forEach(hook => { //iterate through all the hooks
+        //if this is a useEffect hook and its callback should run
+        if(hook?.type === "useEffect" && hook.shouldRun) {
+          hook.cleanup && hook.cleanup() //run the cleanup function if applicable
+          hook.cleanup = hook.callback() //run the callback and save the returned cleanup function
+        }
+      })
+    }
+
+    function triggerRenderAll() { //trigger a rerender using setTimeout
+      clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
+      rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
     }
 
     return {
       render,
       useEffect(callback, deps) {
-        const oldDeps = hooks[globalHookIndex] //will be undefined on first usage
-        const depsChanged = ( //true if oldDeps is undefined or some deps are not equal
-          !oldDeps //true if oldDeps is undefined
-          || oldDeps.some((d,i) => d !== deps[i]) //true if some deps are not equal
+        const depsChanged = ( //true if effect is undefined or some deps are not equal
+          !hooks[globalHookIndex] //true if effect is undefined
+          || hooks[globalHookIndex].deps.some((d,i) => d !== deps[i]) //true if some deps are not equal
         )
 
-        if(!deps || depsChanged) { //if there are no deps OR deps have changed
-          callback() //run the callback
-          hooks[globalHookIndex] = deps //set the new deps
+        if(!hooks[globalHookIndex]) { //if we are calling useEffect for ths first time
+          hooks[globalHookIndex] = { //initialize the effect hook
+            //callback, cleanup, deps, shouldRun will be set later
+            type: "useEffect",
+          }
+        }
+        const effect = hooks[globalHookIndex]
+        effect.callback = callback //save the callback
+        effect.shouldRun = depsChanged //whether the callback should run after the next render
+
+        if(depsChanged) { //if the dependencies have changed
+          effect.deps = deps //save the new array of dependencies
+          triggerRenderAll() //trigger a rerender
         }
 
         globalHookIndex++ //increment to the next index
@@ -152,9 +174,7 @@
         const localHookIndex = globalHookIndex //copy the hook index to be used in the closure
         const setHook = (newValue) => {
           hooks[localHookIndex] = newValue //set the new value
-
-          clearTimeout(rerenderTimeout) //clear any previous rerender timeouts
-          rerenderTimeout = setTimeout(renderAll, 1) //run all the components after the state update
+          triggerRenderAll() //trigger a rerender
         }
         return [
           hooks[globalHookIndex++], //return the current hook value, also increment to the next index
